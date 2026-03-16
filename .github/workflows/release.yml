@@ -158,5 +158,5 @@ jobs:
           artifactErrorsFailBuild: true
           allowUpdates: true
           replacesArtifacts: true
-          draft: false
+          draft: true
           generateReleaseNotes: true

@@ -36,3 +36,8 @@ build_spec.py
 
 # Auto-save drafts
 .mdviewer/
+
+# Local-only folders
+.claude/
+docs/
+examples/
