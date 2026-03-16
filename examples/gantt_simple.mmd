@@ -1,0 +1,15 @@
+gantt
+    title Simple Project Timeline
+    dateFormat YYYY-MM-DD
+    axisFormat %m/%d
+
+    section Phase 1
+        Task A    :a1, 2024-01-01, 7d
+        Task B    :a2, after a1, 5d
+
+    section Phase 2
+        Task C    :b1, after a2, 10d
+        Task D    :b2, after b1, 7d
+
+    section Phase 3
+        Launch    :milestone, c1, after b2, 0d

@@ -1,0 +1,14 @@
+graph TD
+    Start([Start]) --> Input[/Input Data/]
+    Input --> Process[Process Data]
+    Process --> Decision{Valid?}
+    Decision -->|Yes| Output[/Output Result/]
+    Decision -->|No| Error[Show Error]
+    Error --> Input
+    Output --> End([End])
+
+    style Start fill:#90EE90
+    style End fill:#FFB6C1
+    style Process fill:#87CEEB
+    style Decision fill:#FFD700
+    style Error fill:#FF6B6B

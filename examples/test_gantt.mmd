@@ -1,0 +1,29 @@
+gantt
+    title Software Development Project
+    dateFormat YYYY-MM-DD
+    axisFormat %b %d
+
+    section Planning Phase
+        Kickoff                  :milestone, m1, 2024-01-01, 0d
+        Requirements             :a1, 2024-01-02, 14d
+        System Design            :a2, after a1, 10d
+        Review                   :milestone, m2, after a2, 0d
+
+    section Development
+        Setup                    :b1, after a2, 5d
+        Database                 :b2, after b1, 7d
+        Backend Dev              :b3, after b2, 30d
+        Frontend Dev             :b4, after b2, 35d
+        Integration              :b5, after b3 b4, 10d
+
+    section Testing
+        Unit Tests               :c1, after b3, 15d
+        Integration Tests        :c2, after b5, 10d
+        User Testing             :c3, after c2, 14d
+        Bug Fixes                :c4, after c3, 10d
+
+    section Deployment
+        Docs                     :d1, after c3, 7d
+        Prep                     :d2, after c4, 5d
+        Release                  :milestone, m3, after d2, 0d
+        Support                  :d3, after d2, 14d

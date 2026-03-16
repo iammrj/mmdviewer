@@ -1,0 +1,27 @@
+classDiagram
+    class UnifiedViewer {
+        +String current_file
+        +String file_type
+        +Boolean edit_mode
+        +open_file()
+        +save_file()
+        +render_content()
+        +export_html()
+        +export_png()
+        +export_pdf()
+    }
+
+    class MarkdownRenderer {
+        +render()
+        +convert()
+    }
+
+    class MermaidRenderer {
+        +render()
+        +generate_html()
+    }
+
+    UnifiedViewer --> MarkdownRenderer
+    UnifiedViewer --> MermaidRenderer
+    MarkdownRenderer <|-- BaseRenderer
+    MermaidRenderer <|-- BaseRenderer

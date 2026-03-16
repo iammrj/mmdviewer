@@ -1,0 +1,24 @@
+gantt
+    title Project Development Timeline
+    dateFormat YYYY-MM-DD
+    axisFormat %m/%d
+
+    section Planning
+        Requirements Gathering    :a1, 2024-01-01, 14d
+        System Design            :a2, after a1, 10d
+
+    section Development
+        Environment Setup        :b1, after a2, 5d
+        Backend Development      :b2, after b1, 21d
+        Frontend Development     :b3, after b1, 28d
+        Integration             :b4, after b2, 7d
+
+    section Testing
+        Unit Testing            :c1, after b2, 10d
+        Integration Testing     :c2, after b4, 7d
+        UAT                     :c3, after c2, 10d
+
+    section Deployment
+        Documentation           :d1, after c3, 7d
+        Production Release      :milestone, d2, after d1, 0d
+        Post-Launch Support     :d3, after d2, 14d

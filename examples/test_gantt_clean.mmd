@@ -1,0 +1,18 @@
+gantt
+    title Project Timeline
+    dateFormat YYYY-MM-DD
+
+    section Phase 1
+        Task A    :a1, 2024-01-01, 7d
+        Task B    :a2, after a1, 10d
+        Task C    :a3, after a2, 5d
+
+    section Phase 2
+        Task D    :b1, after a3, 14d
+        Task E    :b2, after b1, 7d
+        Task F    :b3, after b2, 10d
+
+    section Phase 3
+        Task G    :c1, after b3, 7d
+        Task H    :c2, after c1, 5d
+        Done      :milestone, c3, after c2, 0d
