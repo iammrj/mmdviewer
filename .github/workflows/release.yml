@@ -104,7 +104,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p artifacts artifacts/deb-root/usr/bin artifacts/deb-root/DEBIAN
-          mv "dist/${{ env.APP_NAME }}" "artifacts/deb-root/usr/bin/${{ env.APP_NAME }}"
+          cp "dist/${{ env.APP_NAME }}" "artifacts/deb-root/usr/bin/${{ env.APP_NAME }}"
+          chmod 755 "artifacts/deb-root/usr/bin/${{ env.APP_NAME }}"
           cat <<EOF > artifacts/deb-root/DEBIAN/control
           Package: mdviewer
           Version: ${{ steps.version.outputs.pkg }}
@@ -157,5 +158,5 @@ jobs:
           artifactErrorsFailBuild: true
           allowUpdates: true
           replacesArtifacts: true
-          draft: true
+          draft: false
           generateReleaseNotes: true

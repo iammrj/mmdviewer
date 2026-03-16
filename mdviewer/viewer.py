@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTextEdit, QAction, QFil
                              QDialog, QLineEdit, QPushButton, QHBoxLayout, QCheckBox, QListWidget, QListWidgetItem,
                              QDockWidget, QTreeWidget, QTreeWidgetItem, QDialogButtonBox)
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineSettings
-from PyQt5.QtCore import Qt, QTimer, QSettings, QSize, QUrl, QRect
+from PyQt5.QtCore import Qt, QTimer, QSettings, QSize, QUrl, QRect, QTime
 from PyQt5.QtGui import QFont, QKeySequence, QCloseEvent, QFontDatabase, QTextCursor, QPainter, QColor, QImage, QIcon, QPixmap
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog, QPrintPreviewDialog
 
@@ -1009,8 +1009,11 @@ class UnifiedViewer(QMainWindow):
 
         return True
 
-    def toggle_edit_mode(self):
-        self.edit_mode = not self.edit_mode
+    def toggle_edit_mode(self, checked=None):
+        if checked is None:
+            self.edit_mode = not self.edit_mode
+        else:
+            self.edit_mode = bool(checked)
 
         if self.edit_mode:
             self.editor.show()
@@ -1781,7 +1784,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
         edit_mode = self.settings.value("edit_mode", False, type=bool)
         if edit_mode:
-            self.toggle_action.trigger()
+            self.toggle_edit_mode(True)
 
     def save_settings(self):
         self.settings.setValue("geometry", self.saveGeometry())
@@ -2113,7 +2116,7 @@ ___</pre>
                 f.write(f"original_file={self.current_file}\n")
                 f.write(f"file_type={self.file_type}\n")
 
-            self.status_label.setText(f"Auto-saved at {QTimer().currentTime().toString()}")
+            self.status_label.setText(f"Auto-saved at {QTime.currentTime().toString('HH:mm:ss')}")
             logger.info(f"Auto-saved draft: {draft_path}")
         except Exception as e:
             logger.error(f"Auto-save failed: {e}")
