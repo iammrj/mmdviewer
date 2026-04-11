@@ -1,8 +1,11 @@
 import sys
 import os
 import logging
+import re
+import html
+import textwrap
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Tuple
 import markdown
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QTextEdit, QAction, QFileDialog,
                              QSplitter, QToolBar, QWidget, QVBoxLayout, QMessageBox,
@@ -18,6 +21,11 @@ from . import __version__, __app_name__
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+MERMAID_FENCE_PATTERN = re.compile(
+    r'^(?P<indent>[ \t]{0,3})(?P<fence>`{3,}|~{3,})[ \t]*mermaid(?:[^\n]*)\n(?P<code>.*?)(?:\n(?P=indent)(?P=fence)[ \t]*$)',
+    re.IGNORECASE | re.MULTILINE | re.DOTALL
+)
 
 
 class EditorWithLineNumbers(QTextEdit):
@@ -1050,10 +1058,9 @@ class UnifiedViewer(QMainWindow):
 
     def render_markdown(self):
         markdown_text = self.editor.toPlainText()
-        html_content = self.md_converter.convert(markdown_text)
-        full_html = self.generate_markdown_html(html_content)
+        html_content, has_mermaid_blocks = self.convert_markdown_to_html(markdown_text)
+        full_html = self.generate_markdown_html(html_content, has_mermaid_blocks)
         self.viewer.setHtml(full_html, baseUrl=self.get_base_url())
-        self.md_converter.reset()
         self.apply_zoom()  # Reapply zoom after render
 
         # Update TOC if visible
@@ -1066,7 +1073,52 @@ class UnifiedViewer(QMainWindow):
         self.viewer.setHtml(html_content)
         self.apply_zoom()  # Reapply zoom after render
 
-    def generate_markdown_html(self, content: str) -> str:
+    def convert_markdown_to_html(self, markdown_text: str) -> Tuple[str, bool]:
+        markdown_with_placeholders, mermaid_blocks = self.extract_mermaid_blocks(markdown_text)
+        html_content = self.md_converter.convert(markdown_with_placeholders)
+        self.md_converter.reset()
+
+        def _replace_placeholder(match):
+            token = match.group("token")
+            return mermaid_blocks.get(token, match.group(0))
+
+        html_content = re.sub(
+            r'<div class="mdv-mermaid-placeholder" data-mdv-mermaid="(?P<token>[^"]+)"></div>',
+            _replace_placeholder,
+            html_content
+        )
+
+        has_mermaid_blocks = bool(mermaid_blocks) or 'class="mermaid"' in html_content
+        return html_content, has_mermaid_blocks
+
+    def extract_mermaid_blocks(self, markdown_text: str) -> Tuple[str, Dict[str, str]]:
+        mermaid_blocks: Dict[str, str] = {}
+
+        def _replace(match):
+            code = textwrap.dedent(match.group("code")).strip()
+            token = f"mdv-mermaid-{len(mermaid_blocks)}"
+            mermaid_blocks[token] = (
+                '<div class="mdv-mermaid-block">'
+                f'<div class="mermaid">{html.escape(code)}</div>'
+                '</div>'
+            )
+            return (
+                f'\n\n<div class="mdv-mermaid-placeholder" '
+                f'data-mdv-mermaid="{token}"></div>\n\n'
+            )
+
+        markdown_with_tokens = MERMAID_FENCE_PATTERN.sub(_replace, markdown_text)
+        return markdown_with_tokens, mermaid_blocks
+
+    def get_pygments_css(self) -> str:
+        try:
+            from pygments.formatters import HtmlFormatter
+            pygments_style = "monokai" if self.dark_mode else "default"
+            return HtmlFormatter(style=pygments_style).get_style_defs('.codehilite')
+        except Exception:
+            return ""
+
+    def generate_markdown_html(self, content: str, has_mermaid_blocks: bool = False) -> str:
         # Get font family based on selection
         if self.viewer_font == "Default (System)":
             font_family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
@@ -1089,6 +1141,41 @@ class UnifiedViewer(QMainWindow):
             code_bg = "#f6f8fa"
             link_color = "#0366d6"
             blockquote_color = "#6a737d"
+
+        pygments_css = self.get_pygments_css()
+        mermaid_theme = "dark" if self.dark_mode else "default"
+        mermaid_assets = ""
+
+        if has_mermaid_blocks:
+            mermaid_assets = f"""
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@9.4.3/dist/mermaid.min.js"></script>
+    <script>
+        (function() {{
+            function renderMermaidBlocks() {{
+                if (typeof mermaid === 'undefined') {{
+                    return;
+                }}
+
+                try {{
+                    mermaid.initialize({{
+                        startOnLoad: false,
+                        securityLevel: 'loose',
+                        theme: '{mermaid_theme}'
+                    }});
+                    mermaid.init(undefined, document.querySelectorAll('.mdv-mermaid-block .mermaid'));
+                }} catch (error) {{
+                    console.error('Mermaid render error:', error);
+                }}
+            }}
+
+            if (document.readyState === 'loading') {{
+                document.addEventListener('DOMContentLoaded', renderMermaidBlocks);
+            }} else {{
+                renderMermaidBlocks();
+            }}
+        }})();
+    </script>
+"""
 
         return f'''<!DOCTYPE html>
 <html>
@@ -1127,6 +1214,38 @@ class UnifiedViewer(QMainWindow):
             border-radius: 6px;
             overflow: auto;
         }}
+        pre code {{
+            background-color: transparent;
+            padding: 0;
+            border-radius: 0;
+            font-size: inherit;
+            color: inherit;
+        }}
+        .codehilite {{
+            background-color: {code_bg};
+            margin: 0 0 16px 0;
+            border-radius: 6px;
+            overflow: auto;
+            padding: 16px;
+        }}
+        .codehilite pre {{
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            border-radius: 0;
+        }}
+        .mdv-mermaid-block {{
+            margin: 16px 0;
+            padding: 16px;
+            border: 1px solid {border_color};
+            border-radius: 6px;
+            background: {code_bg};
+            overflow-x: auto;
+        }}
+        .mdv-mermaid-block .mermaid svg {{
+            max-width: 100%;
+            height: auto;
+        }}
         blockquote {{
             padding: 0 1em;
             color: {blockquote_color};
@@ -1146,9 +1265,10 @@ class UnifiedViewer(QMainWindow):
         a {{ color: {link_color}; text-decoration: none; }}
         a:hover {{ text-decoration: underline; }}
         img {{ max-width: 100%; height: auto; }}
+        {pygments_css}
     </style>
 </head>
-<body>{content}</body>
+<body>{content}{mermaid_assets}</body>
 </html>'''
 
     def generate_mermaid_html(self, mermaid_code: str) -> str:
@@ -1287,9 +1407,8 @@ class UnifiedViewer(QMainWindow):
         if self.file_type == 'mermaid':
             return self.generate_mermaid_html(self.editor.toPlainText())
         else:
-            content = self.md_converter.convert(self.editor.toPlainText())
-            self.md_converter.reset()
-            return self.generate_markdown_html(content)
+            content, has_mermaid_blocks = self.convert_markdown_to_html(self.editor.toPlainText())
+            return self.generate_markdown_html(content, has_mermaid_blocks)
 
     def get_base_url(self):
         if self.current_file:
