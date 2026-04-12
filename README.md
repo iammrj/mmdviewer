@@ -2,7 +2,7 @@
 
 A powerful desktop application for viewing and editing Markdown documents and Mermaid diagrams with extensive customization options.
 
-![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.1.1-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
