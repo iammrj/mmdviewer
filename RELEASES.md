@@ -1,5 +1,15 @@
 # Release History
 
+## v2.1.1 (2026-04-12) - Patch Release
+
+### Fixes
+- 🐛 Updated in-app About dialog version to 2.1.1
+
+### Maintenance
+- 🔖 Prepared release branch/tag metadata for automated draft release pipeline
+
+---
+
 ## v2.1.0 (2026-03-16) - Feature Complete Edition
 
 ### New Features
